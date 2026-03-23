@@ -1,0 +1,5 @@
+@Library('fortifyScan') _
+fortifyScan(
+    gitUrl: 'ssh://git@bt-gitea:22/BOT/fsap-runtime.git',
+    shellName: 'Fortify-FSAP-RUNTIME.sh'
+)

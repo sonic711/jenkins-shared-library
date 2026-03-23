@@ -1,0 +1,171 @@
+pipeline {
+    agent any
+    options {
+        timestamps()
+        ansiColor('xterm')
+        timeout(time: 6, unit: 'HOURS')
+    }
+    stages {
+        stage('Apply Parameters') {
+            steps {
+                script {
+                    if (params.size()>0) {
+                        env.is_param_from_UI = 'true'
+                        echo "Using params from jenkins UI"
+                    } else {
+                        env.is_param_from_UI = 'false'
+                        echo "Using params from pipeline"
+                        properties([
+                            parameters([
+                                choice(name: 'env', choices: ['sit', 'uat'], description: '掃描環境。'),
+                                booleanParam(name: 'is_scan_fsap_adm', defaultValue: false, description: '是否掃描FSAP-ADM ?'),
+								booleanParam(name: 'is_scan_fsap_runtime', defaultValue: false, description: '是否掃描 FSAP-RUNTIME ?'),
+								booleanParam(name: 'is_scan_fsap_gateway', defaultValue: false, description: '是否掃描 FSAP-GATEWAY ?'),
+								booleanParam(name: 'is_scan_fsap_model', defaultValue: false, description: '是否掃描 FSAP-MODEL ?'),
+								booleanParam(name: 'is_scan_fsap_bpmn_utils', defaultValue: false, description: '是否掃描 FSAP-BPMN-UITLS ?'),
+								booleanParam(name: 'is_scan_txcontrol', defaultValue: false, description: '是否掃描 TXCONTROL ?'),
+								booleanParam(name: 'is_scan_ncc', defaultValue: false, description: '是否掃描 NCL ?'),
+								booleanParam(name: 'is_scan_ncl-batch', defaultValue: false, description: '是否掃描 NCL-BATCH ?'),
+								booleanParam(name: 'is_scan_fac', defaultValue: false, description: '是否掃描 FAC ?'),
+								booleanParam(name: 'is_scan_ncb', defaultValue: false, description: '是否掃描 NCB ?'),
+                                
+                            ])
+                        ])
+                    }
+                }
+            }
+        }        
+        
+        stage('FSAP-ADM') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_adm}
+            }
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-ADM", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('FSAP-RUNTIME') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_runtime}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-RUNTIME", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('FSAP-GATEWAY') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_gateway}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-GATEWAY", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('FSAP-MODEL') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_model}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-MODEL", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('FSAP-BPMN-UTILS') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_bpmn_utils}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-BPMN-UTILS", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('TXCONTROL') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_txcontrol}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-TXCONTROL", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('NCL') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncl}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-NCL", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('NCL-BATCH') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncl_batch}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-NCL-BATCH", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('FAC') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fac}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FAC", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+        stage('NCB') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncb}
+            }            
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-NCB", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+              
+    }     
+}

@@ -1,0 +1,5 @@
+@Library('fortifyScan') _
+fortifyScan(
+    gitUrl: 'ssh://git@bt-gitea:22/BOT/bpmn-utils.git',
+    shellName: 'Fortify-FSAP-BPMN-UTILS.sh'
+)
