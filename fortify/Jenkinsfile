@@ -24,8 +24,8 @@ pipeline {
 								booleanParam(name: 'is_scan_fsap_model', defaultValue: false, description: '是否掃描 FSAP-MODEL ?'),
 								booleanParam(name: 'is_scan_fsap_bpmn_utils', defaultValue: false, description: '是否掃描 FSAP-BPMN-UITLS ?'),
 								booleanParam(name: 'is_scan_txcontrol', defaultValue: false, description: '是否掃描 TXCONTROL ?'),
-								booleanParam(name: 'is_scan_ncc', defaultValue: false, description: '是否掃描 NCL ?'),
-								booleanParam(name: 'is_scan_ncl-batch', defaultValue: false, description: '是否掃描 NCL-BATCH ?'),
+								booleanParam(name: 'is_scan_ncl', defaultValue: false, description: '是否掃描 NCL ?'),
+								booleanParam(name: 'is_scan_ncl_batch', defaultValue: false, description: '是否掃描 NCL-BATCH ?'),
 								booleanParam(name: 'is_scan_fac', defaultValue: false, description: '是否掃描 FAC ?'),
 								booleanParam(name: 'is_scan_ncb', defaultValue: false, description: '是否掃描 NCB ?'),
                                 
