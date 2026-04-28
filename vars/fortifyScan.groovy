@@ -65,9 +65,6 @@ def call(Map config = [:]) {
                 steps {
                     script {
                         def fortifyScript = "/var/jenkins_home/Fortify/shells/${params.SHELL_NAME}"
-                        if (params.env == 'uat') {
-                            env.GRADLE_OPTS = "-Dmaven.repo.local=/var/jenkins_home/.m2.uat/repository"
-                        }
                         sh "sudo chown 1111:1111 ${fortifyScript}"
                         sh "sudo chmod +x ${fortifyScript}"
                         sh "sudo chmod +x gradlew"
