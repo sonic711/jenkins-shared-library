@@ -203,8 +203,9 @@ pipeline {
                         "fsap-runtime.jar", "fsap-schedule.jar", "fsap-service-monitor.jar",
                         "ncb-server.jar"
                     ]
-                    sh "mkdir -p saved_artifacts"
                     sh """
+                        rm -rf ./saved_artifacts
+                        mkdir -p saved_artifacts
                         find ../FORTIFY-*/ -type f | grep -E "${filesToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_artifacts/
                     """
                 }
