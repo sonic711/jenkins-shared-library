@@ -38,7 +38,7 @@ pipeline {
 
         stage('RELEASE-UTILS') {
             when {
-                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_model}
+                expression { return env.is_param_from_UI.toBoolean()}
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {

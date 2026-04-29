@@ -198,8 +198,7 @@ pipeline {
                       booleanParam(name: 'is_sonar_analysis', value: false),
                       booleanParam(name: 'is_put_files', value: false),
                       booleanParam(name: 'is_remote_start', value: false),
-                      booleanParam(name: 'is_offline', value: params.is_offline),
-                      booleanParam(name: 'only_publishToMavenLocal', value: true),
+                      booleanParam(name: 'is_offline', value: params.is_offline),                    
                     ]
                 }
             }
