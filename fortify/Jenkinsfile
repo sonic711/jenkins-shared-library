@@ -36,45 +36,20 @@ pipeline {
             }
         }
 
-        stage('FSAP-ADM') {
+        stage('RELEASE-UTILS') {
             when {
-                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_adm}
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_model}
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-ADM", wait: true,
+                    build job: "FORTIFY-RELEASE-FSAP-FLOW-UTILS", wait: true,
                     parameters: [
                       string(name: 'env', value: params.env),
                     ]
                 }
             }
         }
-        stage('FSAP-RUNTIME') {
-            when {
-                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_runtime}
-            }
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-RUNTIME", wait: true,
-                    parameters: [
-                      string(name: 'env', value: params.env),
-                    ]
-                }
-            }
-        }
-        stage('FSAP-GATEWAY') {
-            when {
-                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_gateway}
-            }
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-GATEWAY", wait: true,
-                    parameters: [
-                      string(name: 'env', value: params.env),
-                    ]
-                }
-            }
-        }
+
         stage('FSAP-MODEL') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_model}
@@ -88,6 +63,7 @@ pipeline {
                 }
             }
         }
+
         stage('FSAP-BPMN-UTILS') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_bpmn_utils}
@@ -101,6 +77,49 @@ pipeline {
                 }
             }
         }
+
+        stage('FSAP-RUNTIME') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_runtime}
+            }
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-RUNTIME", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+
+        stage('FSAP-ADM') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_adm}
+            }
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-ADM", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+
+        stage('FSAP-GATEWAY') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_gateway}
+            }
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-GATEWAY", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+
         stage('TXCONTROL') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_txcontrol}
@@ -114,6 +133,7 @@ pipeline {
                 }
             }
         }
+        
         stage('NCL') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncl}
@@ -127,6 +147,7 @@ pipeline {
                 }
             }
         }
+
         stage('NCL-BATCH') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncl_batch}
@@ -140,6 +161,7 @@ pipeline {
                 }
             }
         }
+
         stage('FAC') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fac}
@@ -153,6 +175,7 @@ pipeline {
                 }
             }
         }
+
         stage('NCB') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncb}
@@ -166,6 +189,7 @@ pipeline {
                 }
             }
         }
+
         stage('artifacts') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() }
@@ -187,5 +211,6 @@ pipeline {
                 archiveArtifacts artifacts: 'saved_artifacts/**', fingerprint: true
             }
         }
+
     }
 }
