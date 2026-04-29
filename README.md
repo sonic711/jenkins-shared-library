@@ -16,11 +16,13 @@
 | Jenkinsfile | Git 儲存庫 | Shell Script | 功能摘要 |
 | --- | --- | --- | --- |
 | `fortify/Jenkinsfile` | 依使用者選項觸發各產品 Job | － | 產生參數並呼叫下游 Job（FSAP-ADM/RUNTIME/GATEWAY/MODEL/BPMN-UTILS、TXCONTROL、NCL、NCL-BATCH、FAC、NCB）。|
+| `fortify/Jenkinsfile-release` | 發佈共用函式庫到maven倉庫 | － | 產生參數並呼叫下游 Job（FORTIFY-RELEASE-*）。|
 | `fortify/fsap-adm/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/fsap-adm.git` | `Fortify-FSAP-ADM.sh` | FSAP-ADM Gradle 子專案掃描。|
 | `fortify/fsap-runtime/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/fsap-runtime.git` | `Fortify-FSAP-RUNTIME.sh` | FSAP-RUNTIME 服務掃描。|
 | `fortify/fsap-gateway/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/fsap-gateway.git` | `Fortify-FSAP-GATEWAY.sh` | FSAP-GATEWAY API 掃描。|
 | `fortify/fsap-model/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/fsap-model.git` | `Fortify-FSAP-MODEL.sh` | FSAP-MODEL 元件掃描。|
 | `fortify/fsap-bpmn-utils/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/bpmn-utils.git` | `Fortify-FSAP-BPMN-UTILS.sh` | BPMN 工具套件掃描。|
+| `fortify/tx-control/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/tx-control.git` | `Fortify-TXCONTROL.sh` | TXCONTROL 掃描。|
 | `fortify/fac/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/fac.git` | `Fortify-FAC.sh` | FAC 專案掃描。|
 | `fortify/ncb/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/ncb.git` | `Fortify-NCB.sh` | NCB 專案掃描。|
 | `fortify/ncl/Jenkinsfile` | `ssh://git@bt-gitea:22/BOT/ncl.git` | `Fortify-NCL.sh` | NCL 專案掃描。|
@@ -34,7 +36,7 @@
      - 清空 Workspace。
      - 從 `jenkins-shared-library` 進行 Sparse Checkout，只取 `fortify/shells`，並複製到 `~/Fortify/shells`。
      - 重新清空 Workspace 並檢出目標專案（依 `env` 分支；憑證使用 `gitea`）。
-  3. **Scan**：設定 `GRADLE_OPTS`（UAT 支線使用獨立 Maven Repo），調整 shell 權限後執行 `Fortify` wrapper。
+  3. **Scan**：調整 shell 權限後執行 `Fortify` wrapper。
 - 需要預先在 Jenkins Global Tool Configuration 註冊可用的 JDK 名稱供 `JENKINS_JDK_TOOL` 參數下拉選擇。
 
 ## 流程圖：Git Shell 取得與掃描執行
