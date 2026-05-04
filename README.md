@@ -5,6 +5,7 @@
 專案根目錄
 ├─ fortify/
 │  ├─ Jenkinsfile .............. 總管流程，依參數觸發各個 Fortify 子 Job (FORTIFY-ALL-SCAN-FLOW)
+│  ├─ Jenkinsfile-release ...... 總管發佈流程，依參數觸發各個 Publish/Release 子 Job (FORTIFY-RELEASE-FSAP-FLOW-UTILS)
 │  ├─ <project>/Jenkinsfile .... 指定 Git 儲存庫與 shell，實際邏輯交給共有函式 (FORTIFY-<專案名稱>)
 │  └─ shells/*.sh .............. Fortify wrapper scripts，掃描前會複製到 Jenkins 主機
 ├─ vars/
