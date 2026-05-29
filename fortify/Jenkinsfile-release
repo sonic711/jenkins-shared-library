@@ -92,6 +92,30 @@ pipeline {
                 }
             }
         }
+
+        stage('ACTURATOR-SECURITY') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() }
+            }
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-RELEASE-FSAP-ACTURATOR-SECURITY", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                      booleanParam(name: 'is_assemble', value: true),
+                      booleanParam(name: 'is_test_report', value: false),
+                      booleanParam(name: 'is_code_analysis', value: false),
+                      booleanParam(name: 'is_owasp_analysis', value: false),
+                      booleanParam(name: 'is_sonar_analysis', value: false),
+                      booleanParam(name: 'is_put_files', value: false),
+                      booleanParam(name: 'is_remote_start', value: false),
+                      booleanParam(name: 'is_offline', value: params.is_offline),
+                      booleanParam(name: 'only_publishToMavenLocal', value: true),
+                    ]
+                }
+            }
+        }
+        
         stage('MONITOR-PLUGIN') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() }
@@ -233,28 +257,6 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-RELEASE-NCL", wait: true,
-                    parameters: [
-                      string(name: 'env', value: params.env),
-                      booleanParam(name: 'is_assemble', value: true),
-                      booleanParam(name: 'is_test_report', value: false),
-                      booleanParam(name: 'is_code_analysis', value: false),
-                      booleanParam(name: 'is_owasp_analysis', value: false),
-                      booleanParam(name: 'is_sonar_analysis', value: false),
-                      booleanParam(name: 'is_put_files', value: false),
-                      booleanParam(name: 'is_remote_start', value: false),
-                      booleanParam(name: 'is_offline', value: params.is_offline),
-                      booleanParam(name: 'only_publishToMavenLocal', value: true),
-                    ]
-                }
-            }
-        }
-        stage('ACTURATOR-SECURITY') {
-            when {
-                expression { return env.is_param_from_UI.toBoolean() }
-            }
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-RELEASE-FSAP-ACTURATOR-SECURITY", wait: true,
                     parameters: [
                       string(name: 'env', value: params.env),
                       booleanParam(name: 'is_assemble', value: true),
