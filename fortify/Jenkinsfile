@@ -28,6 +28,7 @@ pipeline {
 								booleanParam(name: 'is_scan_ncl_batch', defaultValue: false, description: '是否掃描 NCL-BATCH ?'),
 								booleanParam(name: 'is_scan_fac', defaultValue: false, description: '是否掃描 FAC ?'),
 								booleanParam(name: 'is_scan_ncb', defaultValue: false, description: '是否掃描 NCB ?'),
+                                booleanParam(name: 'is_scan_fsap_month_report', defaultValue: false, description: '是否掃描 FSAP-MONTH-REPORT ?'),
 
                             ])
                         ])
@@ -190,6 +191,20 @@ pipeline {
             }
         }
 
+        stage('FSAP-MONTH-REPORT') {
+            when {
+                expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_month_report}
+            }
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    build job: "FORTIFY-FSAP-MONTH-REPORT", wait: true,
+                    parameters: [
+                      string(name: 'env', value: params.env),
+                    ]
+                }
+            }
+        }
+
         stage('artifacts') {
             when {
                 expression { return env.is_param_from_UI.toBoolean() }
@@ -201,7 +216,7 @@ pipeline {
                         "bot-ncl-batch-app.war", "fsap-admin.jar", "fsap-batch.jar",
                         "fsap-common-service.jar", "fsap-gateway.jar", "fsap-log-agent-server.jar",
                         "fsap-runtime.jar", "fsap-schedule.jar", "fsap-service-monitor.jar",
-                        "ncb-server.jar"
+                        "ncb-server.jar", "fsap-monitor-util-0.1.0-SNAPSHOT.jar"
                     ]
                     sh """
                         rm -rf ./saved_artifacts

@@ -30,7 +30,8 @@ echo "Fortify scan environment = $ENV"
 DEBUG=false
 SOURCEANALYZER=sourceanalyzer
 BUILDID="FSAP-ADMIN"
-FPR="/var/jenkins_home/Fortify/reports/$BUILDID/$ENV/$(date +%Y%m%d_%H%M%S)/FSAP-ADMIN.fpr"
+REPORT_PATH="/var/jenkins_home/Fortify/reports/$BUILDID/$ENV/$(date +%Y%m%d_%H%M%S)"
+FPR="$REPORT_PATH/$BUILDID.fpr"
 ARGFILE="FortifyFORTIFY-FSAP-ADMIN.sh.args"
 BYTECODE_ARGFILE="FortifyFORTIFY-FSAP-ADMIN.sh.bytecode.args"
 MEMORY="-Xmx14165M -Xms400M -Xss24M "
@@ -44,7 +45,7 @@ ENABLE_BYTECODE=false
 mkdir -p "/var/jenkins_home/Fortify/reports/$BUILDID/$ENV/$(date +%Y%m%d_%H%M%S)"
 
 
-export PATH="/var/jenkins_home/Fortify/OpenText_SAST_Fortify_25.4.0/bin:$PATH"
+export PATH="/var/jenkins_home/Fortify/OpenText_SAST_Fortify_26.1.0/bin:$PATH"
 export PATH="/var/jenkins_home/Fortify/OpenText_Application_Security_Tools_25.4.0/bin:$PATH"
 
 PROJECTROOT0="/var/jenkins_home/workspace/FORTIFY-FSAP-ADM"
@@ -142,6 +143,32 @@ if [ $? -ne 0 ] ; then
 echo sourceanalyzer failed, exiting
 exit 1
 fi
+# ###########################################################################
+echo Starting generate reports
+# OWASP Top 10
+BIRTReportGenerator \
+    -source "$FPR" \
+    -output "$REPORT_PATH/$BUILDID OWASPTop10.pdf" \
+    -format "PDF" \
+    -template "OWASP Top 10" \
+    --SecurityIssueDetails
+BIRTReportGenerator \
+    -source "$FPR" \
+    -output "$REPORT_PATH/$BUILDID OWASPTop10.html" \
+    -format "HTML" \
+    -template "OWASP Top 10" \
+    --SecurityIssueDetails
+# DeveloperWorkbook
+BIRTReportGenerator \
+        -source "$FPR" \
+        -output "$REPORT_PATH/$BUILDID DeveloperWorkbook.pdf" \
+        -format "PDF" \
+        -template "Developer Workbook"
+BIRTReportGenerator \
+        -source "$FPR" \
+        -output "$REPORT_PATH/$BUILDID DeveloperWorkbook.html" \
+        -format "HTML" \
+        -template "Developer Workbook"
 # ###########################################################################
 echo Finished
 # ARGS "-cp"

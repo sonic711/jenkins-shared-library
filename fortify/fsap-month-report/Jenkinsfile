@@ -1,0 +1,5 @@
+@Library('fortifyScan') _
+fortifyScan(
+    gitUrl: 'ssh://git@bt-gitea:22/UTILS/fsap-month-report.git',
+    shellName: 'Fortify-FSAP-MONTH-REPORT.sh'
+)

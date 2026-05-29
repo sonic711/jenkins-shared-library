@@ -27,6 +27,7 @@
 | `fortify/fsap-gateway/Jenkinsfile` | `FORTIFY-FSAP-GATEWAY` | `ssh://git@bt-gitea:22/BOT/fsap-gateway.git` | `Fortify-FSAP-GATEWAY.sh` | 掃描 FSAP-GATEWAY 的 `boot:fastgateway`。 |
 | `fortify/fsap-model/Jenkinsfile` | `FORTIFY-FSAP-MODEL` | `ssh://git@bt-gitea:22/BOT/fsap-model.git` | `Fortify-FSAP-MODEL.sh` | 掃描 FSAP-MODEL 的 `model-grpc-common`。 |
 | `fortify/fsap-bpmn-utils/Jenkinsfile` | `FORTIFY-FSAP-BPMN-UTILS` | `ssh://git@bt-gitea:22/BOT/bpmn-utils.git` | `Fortify-FSAP-BPMN-UTILS.sh` | 掃描 BPMN 工具套件的 `bpmn-utils`。 |
+| `fortify/fsap-month-report/Jenkinsfile` | `FORTIFY-FSAP-MONTH-REPORT` | `ssh://git@bt-gitea:22/UTILS/fsap-month-report.git` | `Fortify-FSAP-MONTH-REPORT.sh` | 掃描 FSAP-MONTH-REPORT 專案，執行 `clean bootJar`。 |
 | `fortify/tx-control/Jenkinsfile` | `FORTIFY-TXCONTROL` | `ssh://git@bt-gitea:22/BOT/tx-control.git` | `Fortify-TXCONTROL.sh` | 掃描 TXCONTROL 專案。 |
 | `fortify/fac/Jenkinsfile` | `FORTIFY-FAC` | `ssh://git@bt-gitea:22/BOT/fac.git` | `Fortify-FAC.sh` | 掃描 FAC 專案。 |
 | `fortify/ncb/Jenkinsfile` | `FORTIFY-NCB` | `ssh://git@bt-gitea:22/BOT/ncb.git` | `Fortify-NCB.sh` | 掃描 NCB 專案。 |
@@ -51,6 +52,7 @@
 | `is_scan_fsap_gateway` | boolean | 是否觸發 `FORTIFY-FSAP-GATEWAY`。 |
 | `is_scan_fsap_model` | boolean | 是否觸發 `FORTIFY-FSAP-MODEL`。 |
 | `is_scan_fsap_bpmn_utils` | boolean | 是否觸發 `FORTIFY-FSAP-BPMN-UTILS`。 |
+| `is_scan_fsap_month_report` | boolean | 是否觸發 `FORTIFY-FSAP-MONTH-REPORT`。 |
 | `is_scan_txcontrol` | boolean | 是否觸發 `FORTIFY-TXCONTROL`。 |
 | `is_scan_ncl` | boolean | 是否觸發 `FORTIFY-NCL`。 |
 | `is_scan_ncl_batch` | boolean | 是否觸發 `FORTIFY-NCL-BATCH`。 |
@@ -60,7 +62,7 @@
 執行順序：
 
 1. `RELEASE-UTILS`：每次有參數觸發時都會先呼叫 `FORTIFY-RELEASE-FSAP-FLOW-UTILS`。
-2. 依參數勾選狀態依序觸發：`FSAP-MODEL`、`FSAP-BPMN-UTILS`、`FSAP-RUNTIME`、`FSAP-ADM`、`FSAP-GATEWAY`、`TXCONTROL`、`NCL`、`NCL-BATCH`、`FAC`、`NCB`。
+2. 依參數勾選狀態依序觸發：`FSAP-MODEL`、`FSAP-BPMN-UTILS`、`FSAP-RUNTIME`、`FSAP-ADM`、`FSAP-GATEWAY`、`TXCONTROL`、`NCL`、`NCL-BATCH`、`FAC`、`NCB`、`FSAP-MONTH-REPORT`。
 3. `artifacts`：清空並重建 `saved_artifacts/`，從 `../FORTIFY-*/` 搜尋指定檔名後複製進來，最後以 `archiveArtifacts` 歸檔。
 
 各產品 stage 使用 `catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')`，因此單一產品失敗時總管流程仍會繼續跑後續 stage，但該 stage 會標示為失敗。
@@ -81,6 +83,7 @@ fsap-runtime.jar
 fsap-schedule.jar
 fsap-service-monitor.jar
 ncb-server.jar
+fsap-monitor-util-0.1.0-SNAPSHOT.jar
 ```
 
 ## Release 總管：`fortify/Jenkinsfile-release`
@@ -175,6 +178,7 @@ Shell 內固定加入 Fortify 25.4.0 工具路徑：
 | `Fortify-FSAP-GATEWAY.sh` | `FSAP-GATEWAY` | `/var/jenkins_home/workspace/FORTIFY-FSAP-GATEWAY` | `boot:fastgateway:clean boot:fastgateway:build -x check --offline`。 |
 | `Fortify-FSAP-MODEL.sh` | `FSAP-MODEL` | `/var/jenkins_home/workspace/FORTIFY-FSAP-MODEL` | `model-grpc-common:clean model-grpc-common:build -x publishToMavenLocal -x check --offline`。 |
 | `Fortify-FSAP-BPMN-UTILS.sh` | `FSAP-BPMN-UTILS` | `/var/jenkins_home/workspace/BOT-FORTIFY-FSAP-BPMN-UTILS` | `bpmn-utils:clean bpmn-utils:build -x publishToMavenLocal -x check --offline`。 |
+| `Fortify-FSAP-MONTH-REPORT.sh` | `FORTIFY-FSAP-MONTH-REPORT` | `/var/jenkins_home/workspace/FORTIFY-FSAP-MONTH-REPORT` | `clean bootJar --offline`。 |
 | `Fortify-TXCONTROL.sh` | `TXCONTROL` | `/var/jenkins_home/workspace/FORTIFY-TXCONTROL` | `clean build -x publishToMavenLocal -x check --offline`。 |
 | `Fortify-FAC.sh` | `FAC` | `/var/jenkins_home/workspace/FORTIFY-FAC` | `clean build -x check --offline`。 |
 | `Fortify-NCB.sh` | `NCB` | `/var/jenkins_home/workspace/FORTIFY-NCB` | `clean build -x check --offline`。 |
