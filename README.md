@@ -102,6 +102,7 @@ Release 總管 Job 使用 `timeout(time: 1, unit: 'HOURS')`，第一次執行時
 | `BPMN-UTILS` | `FORTIFY-RELEASE-FSAP-BPMN-UTILS` |
 | `MODEL` | `FORTIFY-RELEASE-FSAP-MODEL` |
 | `LOG-AGENT-COMMON` | `FORTIFY-RELEASE-FSAP-LOG-AGENT-COMMON` |
+| `ACTURATOR-SECURITY` | `FORTIFY-RELEASE-FSAP-ACTURATOR-SECURITY` |
 | `MONITOR-PLUGIN` | `FORTIFY-RELEASE-FSAP-MONITOR-PLUGIN` |
 | `LOG-AGENT-CLIENT` | `FORTIFY-RELEASE-FSAP-LOG-AGENT-CLIENT` |
 | `DISPATCHER-CLIENT` | `FORTIFY-RELEASE-FSAP-DISPATCHER-CLIENT` |
@@ -158,10 +159,11 @@ fortifyScan(
 
 ## Fortify Shell 一覽
 
-所有 shell 都會接收第一個參數作為 `ENV`，並輸出 FPR 到：
+所有 shell 都會接收第一個參數作為 `ENV`，並使用 `BUILDID` 與時間戳建立報表目錄：
 
 ```text
-/var/jenkins_home/Fortify/reports/<BUILDID>/<ENV>/<yyyyMMdd_HHmmss>/<name>.fpr
+REPORT_PATH=/var/jenkins_home/Fortify/reports/<BUILDID>/<ENV>/<yyyyMMdd_HHmmss>
+FPR=$REPORT_PATH/<BUILDID>.fpr
 ```
 
 Shell 內固定加入 Fortify 25.4.0 工具路徑：
@@ -170,6 +172,17 @@ Shell 內固定加入 Fortify 25.4.0 工具路徑：
 /var/jenkins_home/Fortify/OpenText_SAST_Fortify_25.4.0/bin
 /var/jenkins_home/Fortify/OpenText_Application_Security_Tools_25.4.0/bin
 ```
+
+掃描完成後，shell 會透過 `BIRTReportGenerator` 在同一個 `REPORT_PATH` 下產出下列報表：
+
+| 報表 | 格式 | 輸出檔名 |
+| --- | --- | --- |
+| OWASP Top 10 | PDF | `<BUILDID> OWASPTop10.pdf` |
+| OWASP Top 10 | HTML | `<BUILDID> OWASPTop10.html` |
+| Developer Workbook | PDF | `<BUILDID> DeveloperWorkbook.pdf` |
+| Developer Workbook | HTML | `<BUILDID> DeveloperWorkbook.html` |
+
+OWASP Top 10 報表會帶入 `--SecurityIssueDetails`，包含弱點明細。
 
 | Shell | BUILDID | 預期 workspace | Gradle build 指令摘要 |
 | --- | --- | --- | --- |
@@ -198,8 +211,9 @@ flowchart LR
   G --> H[checkout 目標專案 env branch]
   H --> I[執行 Fortify shell]
   I --> J[sourceanalyzer clean/build/translate/scan]
-  J --> K[產出 FPR 報表]
-  D --> L[總管 Job 彙整 saved_artifacts 並 archive]
+  J --> K[產出 FPR]
+  K --> L[BIRTReportGenerator 產出 PDF/HTML 報表]
+  D --> M[總管 Job 彙整 saved_artifacts 並 archive]
 ```
 
 ## Jenkins 環境需求
@@ -208,6 +222,7 @@ flowchart LR
 - Jenkins credential `gitea` 需可讀取此 repository 與所有目標專案 repository。
 - Jenkins Global Tool Configuration 需至少註冊一組 JDK，供 `JENKINS_JDK_TOOL` 使用。
 - Jenkins Agent 需安裝 Fortify SCA 與 Application Security Tools 25.4.0，且路徑需符合 shell 內設定。
+- Jenkins Agent 需可執行 `BIRTReportGenerator`，用於產出 OWASP Top 10 與 Developer Workbook 報表。
 - Jenkins Agent 需可執行 `sudo chown`、`sudo chmod`，以調整 `/var/jenkins_home/Fortify/shells/*.sh` 與 `gradlew` 權限。
 - Jenkins Agent 需具備 Pipeline 中使用的 step/plugin，例如 `cleanWs`、`timestamps`、`ansiColor`、`archiveArtifacts`。
 - 各目標專案需存在與 `env` 參數同名的 branch，例如 `sit` 或 `uat`。
@@ -230,7 +245,7 @@ flowchart LR
 
 1. 新增 `fortify/<project>/Jenkinsfile`，透過 `fortifyScan(gitUrl: ..., shellName: ...)` 指定目標 repo 與 shell。
 2. 將對應 Fortify shell 放到 `fortify/shells/`，檔名需與 `shellName` 完全一致。
-3. 確認 shell 內的 `BUILDID`、`FPR`、`PROJECTROOT0` 與 Gradle build 指令符合 Jenkins Job 與目標專案。
+3. 確認 shell 內的 `BUILDID`、`REPORT_PATH`、`FPR`、`PROJECTROOT0`、Gradle build 指令與 BIRT 報表產出符合 Jenkins Job 與目標專案。
 4. 若需由掃描總管觸發，在 `fortify/Jenkinsfile` 加入 boolean 參數與 stage。
 5. 若掃描前需 publish 共用模組，在 `fortify/Jenkinsfile-release` 加入對應 release stage。
 6. 若產物需由總管歸檔，在 `filesToCopy` 清單加入檔名。
