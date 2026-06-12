@@ -221,15 +221,16 @@ pipeline {
                     def reportsToCopy = ["OWASPTop10", "DeveloperWorkbook"]
 
                     sh """
-                        rm -rf ./saved_artifacts
-                        mkdir -p saved_artifacts
+                        rm -rf ./saved_artifacts && rm -rf ./saved_reports
+                        mkdir -p saved_artifacts && mkdir -p saved_reports
                         
                         # 搜尋並複製jar/war 跟 報告
                         find ../FORTIFY-*/ -type f | grep -E "${filesToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_artifacts/
-                        find ../FORTIFY-*/ -type f | grep -E "${reportsToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_artifacts/
+                        find ../FORTIFY-*/ -type f | grep -E "${reportsToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_reports/
                         
-                        # 將資料夾打包壓縮為 artifacts.tar.gz
+                        # 將資料夾分別打包
                         tar -czvf artifacts.tar.gz -C ./saved_artifacts .
+                        tar -czvf reports.tar.gz -C ./saved_reports .
                     """
                 }
                 // artifacts 打包好的壓縮檔
