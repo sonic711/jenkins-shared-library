@@ -235,6 +235,7 @@ pipeline {
                 }
                 // artifacts 打包好的壓縮檔
                 archiveArtifacts artifacts: 'artifacts.tar.gz', fingerprint: true
+                archiveArtifacts artifacts: 'reports.tar.gz', fingerprint: true
             }
         }
 
