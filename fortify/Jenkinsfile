@@ -218,13 +218,22 @@ pipeline {
                         "fsap-runtime.jar", "fsap-schedule.jar", "fsap-service-monitor.jar",
                         "ncb-server.jar", "fsap-monitor-util-0.1.0-SNAPSHOT.jar"
                     ]
+                    def reportsToCopy = ["OWASPTop10", "DeveloperWorkbook"]
+
                     sh """
                         rm -rf ./saved_artifacts
                         mkdir -p saved_artifacts
+                        
+                        # 搜尋並複製jar/war 跟 報告
                         find ../FORTIFY-*/ -type f | grep -E "${filesToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_artifacts/
+                        find ../FORTIFY-*/ -type f | grep -E "${reportsToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_artifacts/
+                        
+                        # 將資料夾打包壓縮為 artifacts.tar.gz
+                        tar -czvf artifacts.tar.gz -C ./saved_artifacts .
                     """
                 }
-                archiveArtifacts artifacts: 'saved_artifacts/**', fingerprint: true
+                // artifacts 打包好的壓縮檔
+                archiveArtifacts artifacts: 'artifacts.tar.gz', fingerprint: true
             }
         }
 

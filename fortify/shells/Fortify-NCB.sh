@@ -135,27 +135,29 @@ echo Starting generate reports
 # OWASP Top 10
 BIRTReportGenerator \
     -source "$FPR" \
-    -output "$REPORT_PATH/$BUILDID OWASPTop10.pdf" \
+    -output "$BUILDID OWASPTop10.pdf" \
     -format "PDF" \
     -template "OWASP Top 10" \
     --SecurityIssueDetails
 BIRTReportGenerator \
     -source "$FPR" \
-    -output "$REPORT_PATH/$BUILDID OWASPTop10.html" \
+    -output "$BUILDID OWASPTop10.html" \
     -format "HTML" \
     -template "OWASP Top 10" \
     --SecurityIssueDetails
 # DeveloperWorkbook
 BIRTReportGenerator \
         -source "$FPR" \
-        -output "$REPORT_PATH/$BUILDID DeveloperWorkbook.pdf" \
+        -output "$BUILDID DeveloperWorkbook.pdf" \
         -format "PDF" \
         -template "Developer Workbook"
 BIRTReportGenerator \
         -source "$FPR" \
-        -output "$REPORT_PATH/$BUILDID DeveloperWorkbook.html" \
+        -output "$BUILDID DeveloperWorkbook.html" \
         -format "HTML" \
         -template "Developer Workbook"
+
+find . -type f \( -name "*DeveloperWorkbook*" -o -name "*OWASPTop10*" \) -exec cp -v {} "$REPORT_PATH/$BUILDID/" \;
 # ###########################################################################
 echo Finished
 # ARGS "-cp"
