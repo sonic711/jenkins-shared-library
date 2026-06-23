@@ -18,6 +18,7 @@ def call(Map config = [:]) {
                             // 直接在這裡使用 config 傳進來的值
                             properties([
                                 parameters([
+                                    choice(name: 'git_branch_name', choices: ['sit', 'master'], description: '掃描分支。'),
                                     choice(name: 'env', choices: ['sit', 'uat'], description: '掃描環境'),
                                     string(name: 'GIT_URL', defaultValue: config.gitUrl ?: ''),
                                     string(name: 'SHELL_NAME', defaultValue: config.shellName ?: ''),
@@ -56,8 +57,8 @@ def call(Map config = [:]) {
                     // 4. 搬移後,清除步驟1~2的檔案
                     cleanWs()
 
-                    // 5. 拉取主要的專案程式碼 (分支:params.env)
-                    git branch: params.env, url: params.GIT_URL, credentialsId: 'gitea'
+                    // 5. 拉取主要的專案程式碼 (分支:params.git_branch_name)
+                    git branch: params.git_branch_name, url: params.GIT_URL, credentialsId: 'gitea'
                 }
             }
             stage('Scan') {
@@ -68,6 +69,7 @@ def call(Map config = [:]) {
                         sh "sudo chown 1111:1111 ${fortifyScript}"
                         sh "sudo chmod +x ${fortifyScript}"
                         sh "sudo chmod +x gradlew"
+                        
                         sh "${fortifyScript} ${params.env}"
                     }
                 }

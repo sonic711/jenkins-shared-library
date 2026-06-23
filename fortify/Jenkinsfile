@@ -12,12 +12,19 @@ pipeline {
                     if (params.size()>0) {
                         env.is_param_from_UI = 'true'
                         echo "Using params from jenkins UI"
+                        if (params.git_branch_name == 'master') {
+                            env.target_env = 'uat'
+                            echo "Branch is master, override env to: ${env.target_env}"
+                        } else {
+                            env.target_env = 'sit'
+                            echo "Using UI selected env: ${env.target_env}"
+                        }
                     } else {
                         env.is_param_from_UI = 'false'
                         echo "Using params from pipeline"
                         properties([
                             parameters([
-                                choice(name: 'env', choices: ['sit', 'uat'], description: '掃描環境。'),
+                                choice(name: 'git_branch_name', choices: ['sit', 'master'], description: '掃描分支。'),
                                 booleanParam(name: 'is_scan_fsap_adm', defaultValue: false, description: '是否掃描FSAP-ADM ?'),
 								booleanParam(name: 'is_scan_fsap_runtime', defaultValue: false, description: '是否掃描 FSAP-RUNTIME ?'),
 								booleanParam(name: 'is_scan_fsap_gateway', defaultValue: false, description: '是否掃描 FSAP-GATEWAY ?'),
@@ -45,7 +52,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-RELEASE-FSAP-FLOW-UTILS", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -59,7 +67,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-FSAP-MODEL", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -73,7 +82,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-FSAP-BPMN-UTILS", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -87,7 +97,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-FSAP-RUNTIME", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -101,7 +112,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-FSAP-ADM", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -115,7 +127,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-FSAP-GATEWAY", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -129,7 +142,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-TXCONTROL", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -143,7 +157,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-NCL", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -157,7 +172,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-NCL-BATCH", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -171,7 +187,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-FAC", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -185,7 +202,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-NCB", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
@@ -199,7 +217,8 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     build job: "FORTIFY-FSAP-MONTH-REPORT", wait: true,
                     parameters: [
-                      string(name: 'env', value: params.env),
+                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'env', value: env.target_env),
                     ]
                 }
             }
