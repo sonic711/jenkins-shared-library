@@ -25,6 +25,7 @@ pipeline {
                         properties([
                             parameters([
                                 choice(name: 'git_branch_name', choices: ['sit', 'master'], description: '掃描分支。'),
+                                booleanParam(name: 'is_release_utils', defaultValue: true, description: '是否Publish Utils ?'),
                                 booleanParam(name: 'is_scan_fsap_adm', defaultValue: false, description: '是否掃描FSAP-ADM ?'),
 								booleanParam(name: 'is_scan_fsap_runtime', defaultValue: false, description: '是否掃描 FSAP-RUNTIME ?'),
 								booleanParam(name: 'is_scan_fsap_gateway', defaultValue: false, description: '是否掃描 FSAP-GATEWAY ?'),
@@ -46,7 +47,7 @@ pipeline {
 
         stage('RELEASE-UTILS') {
             when {
-                expression { return env.is_param_from_UI.toBoolean()}
+                expression { return env.is_param_from_UI.toBoolean() && params.is_release_utils}
             }
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
