@@ -42,8 +42,8 @@ ENABLE_BYTECODE=false
 
 mkdir -p "/var/jenkins_home/Fortify/reports/$BUILDID/$ENV/$(date +%Y%m%d_%H%M%S)"
 
-export PATH="/var/jenkins_home/Fortify/OpenText_SAST_Fortify_26.1.0/bin:$PATH"
-export PATH="/var/jenkins_home/Fortify/OpenText_Application_Security_Tools_25.4.0/bin:$PATH"
+export PATH="/var/jenkins_home/Fortify/OpenText_SAST_Fortify_26.2.0/bin:$PATH"
+export PATH="/var/jenkins_home/Fortify/OpenText_Application_Security_Tools_26.2.0/bin:$PATH"
 
 PROJECTROOT0="/var/jenkins_home/workspace/FORTIFY-NCL-BATCH"
 if [ ! -d "$PROJECTROOT0" ]; then
