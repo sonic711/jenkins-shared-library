@@ -148,25 +148,25 @@ echo Starting generate reports
 # OWASP Top 10
 BIRTReportGenerator \
     -source "$FPR" \
-    -output "$BUILDID_OWASPTop10.pdf" \
+    -output "${BUILDID}_OWASPTop10.pdf" \
     -format "PDF" \
     -template "OWASP Top 10" \
     --SecurityIssueDetails
 BIRTReportGenerator \
     -source "$FPR" \
-    -output "$BUILDID_OWASPTop10.html" \
+    -output "${BUILDID}_OWASPTop10.html" \
     -format "HTML" \
     -template "OWASP Top 10" \
     --SecurityIssueDetails
 # DeveloperWorkbook
 BIRTReportGenerator \
         -source "$FPR" \
-        -output "$BUILDID_DeveloperWorkbook.pdf" \
+        -output "${BUILDID}_DeveloperWorkbook.pdf" \
         -format "PDF" \
         -template "Developer Workbook"
 BIRTReportGenerator \
         -source "$FPR" \
-        -output "$BUILDID_DeveloperWorkbook.html" \
+        -output "${BUILDID}_DeveloperWorkbook.html" \
         -format "HTML" \
         -template "Developer Workbook"
 
