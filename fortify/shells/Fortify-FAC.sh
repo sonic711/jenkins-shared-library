@@ -162,7 +162,7 @@ BIRTReportGenerator \
         -format "HTML" \
         -template "Developer Workbook"
 
-find . -type f \( -name "*DeveloperWorkbook*" -o -name "*OWASPTop10*" \) -exec cp -v {} "$REPORT_PATH/$BUILDID/" \;
+find . -type f \( -name "*DeveloperWorkbook*" -o -name "*OWASPTop10*" \) -exec cp -v {} "$REPORT_PATH" \;
 # ###########################################################################
 echo Finished
 # ARGS "-cp"
