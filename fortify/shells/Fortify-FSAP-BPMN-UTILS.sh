@@ -44,7 +44,7 @@ mkdir -p "/var/jenkins_home/Fortify/reports/$BUILDID/$ENV/$(date +%Y%m%d_%H%M%S)
 export PATH="/var/jenkins_home/Fortify/OpenText_SAST_Fortify_26.2.0/bin:$PATH"
 export PATH="/var/jenkins_home/Fortify/OpenText_Application_Security_Tools_26.2.0/bin:$PATH"
 
-PROJECTROOT0="/var/jenkins_home/workspace/BOT-FORTIFY-FSAP-BPMN-UTILS"
+PROJECTROOT0="/var/jenkins_home/workspace/FORTIFY-FSAP-BPMN-UTILS"
 if [ ! -d "$PROJECTROOT0" ]; then
    echo  "ERROR: This script is being run on a different machine than it was"
    echo  "       generated on or the targeted project has been moved. This script is "
