@@ -1,3 +1,43 @@
+def scanProject(String jobName) {
+    boolean collected = false
+    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
+        def scanBuild = build job: jobName, wait: true, propagate: false,
+            parameters: [
+                string(name: 'git_branch_name', value: params.git_branch_name),
+                string(name: 'env', value: env.target_env),
+            ]
+        echo "${jobName} #${scanBuild.number}: ${scanBuild.result}"
+        if (scanBuild.result != 'SUCCESS') {
+            error("Scan failed: ${jobName} #${scanBuild.number} (${scanBuild.result})")
+        }
+
+        dir("collected/${jobName}") {
+            deleteDir()
+            copyArtifacts projectName: jobName,
+                selector: specific("${scanBuild.number}"),
+                filter: 'scan-output/**', fingerprintArtifacts: true
+            sh '''
+                set -eu
+                set -- scan-output/reports/*_OWASPTop10.pdf
+                if [ "$#" -ne 1 ] || [ ! -s "$1" ]; then
+                    echo 'ERROR: Expected one non-empty OWASP Top 10 PDF' >&2
+                    exit 1
+                fi
+                report_prefix="${1%_OWASPTop10.pdf}"
+                for suffix in OWASPTop10.pdf OWASPTop10.html DeveloperWorkbook.pdf DeveloperWorkbook.html; do
+                    test -s "${report_prefix}_$suffix"
+                done
+                test -n "$(find scan-output/artifacts -type f \\( -name '*.jar' -o -name '*.war' \\) -print -quit)"
+                test -z "$(find scan-output/artifacts -type f -size 0 -print -quit)"
+            '''
+        }
+        collected = true
+    }
+    return collected
+}
+
+def successfulProjects = []
+
 pipeline {
     agent any
     options {
@@ -11,6 +51,12 @@ pipeline {
                 script {
                     if (params.size()>0) {
                         env.is_param_from_UI = 'true'
+                        for (outputDir in ['collected', 'saved_artifacts', 'saved_reports']) {
+                            dir(outputDir) {
+                                deleteDir()
+                            }
+                        }
+                        sh 'rm -f artifacts.tar.gz reports.tar.gz'
                         echo "Using params from jenkins UI"
                         if (params.git_branch_name == 'master') {
                             env.target_env = 'uat'
@@ -50,10 +96,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_release_utils}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
                     build job: "FORTIFY-RELEASE-FSAP-FLOW-UTILS", wait: true,
                     parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
+                      string(name: 'git_branch_name', value: params.git_branch_name),
                       string(name: 'env', value: env.target_env),
                     ]
                 }
@@ -65,12 +111,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_model}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-MODEL", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-FSAP-MODEL')) {
+                        successfulProjects.add('FORTIFY-FSAP-MODEL')
+                    }
                 }
             }
         }
@@ -80,12 +124,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_bpmn_utils}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-BPMN-UTILS", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-FSAP-BPMN-UTILS')) {
+                        successfulProjects.add('FORTIFY-FSAP-BPMN-UTILS')
+                    }
                 }
             }
         }
@@ -95,12 +137,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_runtime}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-RUNTIME", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-FSAP-RUNTIME')) {
+                        successfulProjects.add('FORTIFY-FSAP-RUNTIME')
+                    }
                 }
             }
         }
@@ -110,12 +150,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_adm}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-ADM", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-FSAP-ADM')) {
+                        successfulProjects.add('FORTIFY-FSAP-ADM')
+                    }
                 }
             }
         }
@@ -125,12 +163,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_gateway}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-GATEWAY", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-FSAP-GATEWAY')) {
+                        successfulProjects.add('FORTIFY-FSAP-GATEWAY')
+                    }
                 }
             }
         }
@@ -140,12 +176,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_txcontrol}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-TXCONTROL", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-TXCONTROL')) {
+                        successfulProjects.add('FORTIFY-TXCONTROL')
+                    }
                 }
             }
         }
@@ -155,12 +189,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncl}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-NCL", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-NCL')) {
+                        successfulProjects.add('FORTIFY-NCL')
+                    }
                 }
             }
         }
@@ -170,12 +202,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncl_batch}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-NCL-BATCH", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-NCL-BATCH')) {
+                        successfulProjects.add('FORTIFY-NCL-BATCH')
+                    }
                 }
             }
         }
@@ -185,12 +215,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fac}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FAC", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-FAC')) {
+                        successfulProjects.add('FORTIFY-FAC')
+                    }
                 }
             }
         }
@@ -200,12 +228,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_ncb}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-NCB", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-NCB')) {
+                        successfulProjects.add('FORTIFY-NCB')
+                    }
                 }
             }
         }
@@ -215,12 +241,10 @@ pipeline {
                 expression { return env.is_param_from_UI.toBoolean() && params.is_scan_fsap_month_report}
             }
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    build job: "FORTIFY-FSAP-MONTH-REPORT", wait: true,
-                    parameters: [
-                      string(name: 'git_branch_name', value: env.git_branch_name),
-                      string(name: 'env', value: env.target_env),
-                    ]
+                script {
+                    if (scanProject('FORTIFY-FSAP-MONTH-REPORT')) {
+                        successfulProjects.add('FORTIFY-FSAP-MONTH-REPORT')
+                    }
                 }
             }
         }
@@ -231,31 +255,29 @@ pipeline {
             }
             steps {
                 script {
-                    def filesToCopy = [
-                        "bot-fac-app.war", "bot-fac-batch-app.war", "bot-ncl-app.war",
-                        "bot-ncl-batch-app.war", "fsap-admin.jar", "fsap-batch.jar",
-                        "fsap-common-service.jar", "fsap-gateway.jar", "fsap-log-agent-server.jar",
-                        "fsap-runtime.jar", "fsap-schedule.jar", "fsap-service-monitor.jar",
-                        "ncb-server.jar", "fsap-monitor-util-0.1.0-SNAPSHOT.jar"
-                    ]
-                    def reportsToCopy = ["OWASPTop10", "DeveloperWorkbook"]
-
-                    sh """
-                        rm -rf ./saved_artifacts && rm -rf ./saved_reports
-                        mkdir -p saved_artifacts && mkdir -p saved_reports
-                        
-                        # 搜尋並複製jar/war 跟 報告
-                        find ../FORTIFY-*/ -type f | grep -E "${filesToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_artifacts/
-                        find ../FORTIFY-*/ -type f | grep -E "${reportsToCopy.join('|')}" | xargs -I {} cp -v {} ./saved_reports/
-                        
-                        # 將資料夾分別打包
-                        tar -czvf artifacts.tar.gz -C ./saved_artifacts .
-                        tar -czvf reports.tar.gz -C ./saved_reports .
-                    """
+                    if (successfulProjects.isEmpty()) {
+                        echo 'No successful scan outputs collected; skipping archives.'
+                    } else {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
+                            for (jobName in successfulProjects) {
+                                withEnv(["FORTIFY_PROJECT=${jobName}"]) {
+                                    sh '''
+                                        set -eu
+                                        mkdir -p saved_artifacts saved_reports
+                                        cp -R "collected/$FORTIFY_PROJECT/scan-output/artifacts" "saved_artifacts/$FORTIFY_PROJECT"
+                                        cp -R "collected/$FORTIFY_PROJECT/scan-output/reports" "saved_reports/$FORTIFY_PROJECT"
+                                    '''
+                                }
+                            }
+                            sh '''
+                                set -eu
+                                tar -czf artifacts.tar.gz -C saved_artifacts .
+                                tar -czf reports.tar.gz -C saved_reports .
+                            '''
+                            archiveArtifacts artifacts: 'artifacts.tar.gz,reports.tar.gz', fingerprint: true
+                        }
+                    }
                 }
-                // artifacts 打包好的壓縮檔
-                archiveArtifacts artifacts: 'artifacts.tar.gz', fingerprint: true
-                archiveArtifacts artifacts: 'reports.tar.gz', fingerprint: true
             }
         }
 

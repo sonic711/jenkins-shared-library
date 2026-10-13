@@ -65,13 +65,25 @@ def call(Map config = [:]) {
                 when { expression { return env.is_param_from_UI.toBoolean() } }
                 steps {
                     script {
+                        dir('scan-output') {
+                            deleteDir()
+                        }
                         def fortifyScript = "/var/jenkins_home/Fortify/shells/${params.SHELL_NAME}"
                         sh "sudo chown 1111:1111 ${fortifyScript}"
                         sh "sudo chmod +x ${fortifyScript}"
                         sh "sudo chmod +x gradlew"
                         
-                        sh "${fortifyScript} ${params.env}"
+                        withEnv(["FORTIFY_REPORT_DIR=${pwd()}/scan-output/reports"]) {
+                            sh "${fortifyScript} ${params.env}"
+                        }
                     }
+                }
+            }
+            stage('Archive Outputs') {
+                when { expression { return env.is_param_from_UI.toBoolean() } }
+                steps {
+                    sh 'sh /var/jenkins_home/Fortify/shells/Collect-Fortify-Outputs.sh'
+                    archiveArtifacts artifacts: 'scan-output/**', fingerprint: true
                 }
             }
         }
