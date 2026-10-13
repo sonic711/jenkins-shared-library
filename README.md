@@ -20,7 +20,7 @@
 
 | Jenkinsfile | Jenkins Job | Git 儲存庫 | Shell Script | 功能摘要 |
 | --- | --- | --- | --- | --- |
-| `fortify/Jenkinsfile` | 掃描總管 Job | 依參數觸發下游 Job | - | 建立掃描參數、先觸發 `FORTIFY-RELEASE-FSAP-FLOW-UTILS`，再依勾選項目呼叫各 `FORTIFY-*` 掃描 Job，最後歸檔指定 artifacts。 |
+| `fortify/Jenkinsfile` | 掃描總管 Job | 依參數觸發下游 Job | - | 建立掃描參數，依設定選擇是否先觸發 `FORTIFY-RELEASE-FSAP-FLOW-UTILS`，再呼叫各 `FORTIFY-*` 掃描 Job，最後打包並歸檔 artifacts 與 reports。 |
 | `fortify/Jenkinsfile-release` | Release 總管 Job | 依序觸發 release 下游 Job | - | 觸發多個 `FORTIFY-RELEASE-*` Job，主要用於掃描前將共用模組 publish 到 Maven local。 |
 | `fortify/fsap-adm/Jenkinsfile` | `FORTIFY-FSAP-ADM` | `ssh://git@bt-gitea:22/BOT/fsap-adm.git` | `Fortify-FSAP-ADM.sh` | 掃描 FSAP-ADM 多個 Gradle 子模組。 |
 | `fortify/fsap-runtime/Jenkinsfile` | `FORTIFY-FSAP-RUNTIME` | `ssh://git@bt-gitea:22/BOT/fsap-runtime.git` | `Fortify-FSAP-RUNTIME.sh` | 掃描 FSAP-RUNTIME 的 `boot:runtime`。 |
@@ -46,7 +46,8 @@
 
 | 參數 | 類型 | 說明 |
 | --- | --- | --- |
-| `env` | choice | 掃描環境，選項為 `sit`、`uat`；也會作為目標 Git branch 名稱傳給子 Job。 |
+| `git_branch_name` | choice | 目標 Git branch，選項為 `sit`、`master`。選擇 `master` 時，總管會將掃描環境設定為 `uat`；選擇 `sit` 時，掃描環境為 `sit`。 |
+| `is_release_utils` | boolean | 是否先觸發 `FORTIFY-RELEASE-FSAP-FLOW-UTILS`，預設為 `true`。 |
 | `is_scan_fsap_adm` | boolean | 是否觸發 `FORTIFY-FSAP-ADM`。 |
 | `is_scan_fsap_runtime` | boolean | 是否觸發 `FORTIFY-FSAP-RUNTIME`。 |
 | `is_scan_fsap_gateway` | boolean | 是否觸發 `FORTIFY-FSAP-GATEWAY`。 |
@@ -61,9 +62,9 @@
 
 執行順序：
 
-1. `RELEASE-UTILS`：每次有參數觸發時都會先呼叫 `FORTIFY-RELEASE-FSAP-FLOW-UTILS`。
-2. 依參數勾選狀態依序觸發：`FSAP-MODEL`、`FSAP-BPMN-UTILS`、`FSAP-RUNTIME`、`FSAP-ADM`、`FSAP-GATEWAY`、`TXCONTROL`、`NCL`、`NCL-BATCH`、`FAC`、`NCB`、`FSAP-MONTH-REPORT`。
-3. `artifacts`：清空並重建 `saved_artifacts/`，從 `../FORTIFY-*/` 搜尋指定檔名後複製進來，最後以 `archiveArtifacts` 歸檔。
+1. `RELEASE-UTILS`：只有 `is_release_utils=true` 時才呼叫 `FORTIFY-RELEASE-FSAP-FLOW-UTILS`，並傳入 `git_branch_name` 與對應的 `env`。
+2. 依參數勾選狀態依序觸發：`FSAP-MODEL`、`FSAP-BPMN-UTILS`、`FSAP-RUNTIME`、`FSAP-ADM`、`FSAP-GATEWAY`、`TXCONTROL`、`NCL`、`NCL-BATCH`、`FAC`、`NCB`、`FSAP-MONTH-REPORT`。每個下游 Job 都會收到 `git_branch_name` 與 `env`。
+3. `artifacts`：清空並重建 `saved_artifacts/` 與 `saved_reports/`，從 `../FORTIFY-*/` 搜尋產物與報表，分別打包成 `artifacts.tar.gz`、`reports.tar.gz`，再以 `archiveArtifacts` 歸檔。
 
 各產品 stage 使用 `catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE')`，因此單一產品失敗時總管流程仍會繼續跑後續 stage，但該 stage 會標示為失敗。
 
@@ -86,12 +87,15 @@ ncb-server.jar
 fsap-monitor-util-0.1.0-SNAPSHOT.jar
 ```
 
+報表搜尋關鍵字為 `OWASPTop10` 與 `DeveloperWorkbook`。總管 Job 會將掃描產出的 PDF/HTML 報表放入 `reports.tar.gz`。
+
 ## Release 總管：`fortify/Jenkinsfile-release`
 
 Release 總管 Job 使用 `timeout(time: 1, unit: 'HOURS')`，第一次執行時會建立：
 
 | 參數 | 類型 | 說明 |
 | --- | --- | --- |
+| `git_branch_name` | choice | 目標 Git branch，選項為 `sit`、`master`。 |
 | `env` | choice | 發佈環境，選項為 `sit`、`uat`。 |
 | `is_offline` | boolean | 是否以離線包版方式執行，預設為 `true`。 |
 
@@ -103,9 +107,9 @@ Release 總管 Job 使用 `timeout(time: 1, unit: 'HOURS')`，第一次執行時
 | `MODEL` | `FORTIFY-RELEASE-FSAP-MODEL` |
 | `LOG-AGENT-COMMON` | `FORTIFY-RELEASE-FSAP-LOG-AGENT-COMMON` |
 | `ACTURATOR-SECURITY` | `FORTIFY-RELEASE-FSAP-ACTURATOR-SECURITY` |
+| `DISPATCHER-CLIENT` | `FORTIFY-RELEASE-FSAP-DISPATCHER-CLIENT` |
 | `MONITOR-PLUGIN` | `FORTIFY-RELEASE-FSAP-MONITOR-PLUGIN` |
 | `LOG-AGENT-CLIENT` | `FORTIFY-RELEASE-FSAP-LOG-AGENT-CLIENT` |
-| `DISPATCHER-CLIENT` | `FORTIFY-RELEASE-FSAP-DISPATCHER-CLIENT` |
 | `COMMAND-UTILS` | `FORTIFY-RELEASE-FSAP-COMMAND-UTILS` |
 | `RUNTIME` | `FORTIFY-RELEASE-FSAP-RUNTIME` |
 | `TX-CONTROL` | `FORTIFY-RELEASE-TX-CONTROL` |
@@ -113,6 +117,8 @@ Release 總管 Job 使用 `timeout(time: 1, unit: 'HOURS')`，第一次執行時
 
 多數下游 Job 會帶入固定參數：
 
+- `git_branch_name=params.git_branch_name`
+- `env=params.env`
 - `is_assemble=true`
 - `is_test_report=false`
 - `is_code_analysis=false`
@@ -141,7 +147,7 @@ fortifyScan(
 
 1. **Apply Parameters**
    - 若 Jenkins 已帶入任何參數，設定 `env.is_param_from_UI = 'true'`。
-   - 若沒有參數，設定 `env.is_param_from_UI = 'false'`，並建立 `env`、`GIT_URL`、`SHELL_NAME`、`JENKINS_JDK_TOOL` 參數。
+   - 若沒有參數，設定 `env.is_param_from_UI = 'false'`，並建立 `git_branch_name`、`env`、`GIT_URL`、`SHELL_NAME`、`JENKINS_JDK_TOOL` 參數。
    - `JENKINS_JDK_TOOL` 會讀取 Jenkins Global Tool Configuration 中已註冊的 JDK；未指定時使用第一組 JDK。
 
 2. **Clone**
@@ -149,13 +155,13 @@ fortifyScan(
    - 從 `ssh://git@bt-gitea:22/BOT/jenkins-shared-library.git` 的 `main` branch 進行 Sparse Checkout，只取 `fortify/shells`。
    - 將 `fortify/shells/*.sh` 複製到 `~/Fortify/shells/`。
    - 再次 `cleanWs()`。
-   - 使用 Jenkins credential `gitea` checkout `params.GIT_URL`，branch 為 `params.env`。
+   - 使用 Jenkins credential `gitea` checkout `params.GIT_URL`，branch 為 `params.git_branch_name`。
 
 3. **Scan**
    - Fortify shell 路徑固定為 `/var/jenkins_home/Fortify/shells/${params.SHELL_NAME}`。
    - 執行 `sudo chown 1111:1111` 與 `sudo chmod +x` 設定 shell 權限。
    - 執行 `sudo chmod +x gradlew`。
-   - 執行 `${fortifyScript} ${params.env}`，將 `sit` 或 `uat` 傳入 shell 第一個參數。
+   - 執行 `${fortifyScript} ${params.env}`，將 `sit` 或 `uat` 傳入 shell 第一個參數；`git_branch_name` 與 `env` 可不同，例如 `master` branch 對應 `uat` 環境。
 
 ## Fortify Shell 一覽
 
@@ -166,11 +172,11 @@ REPORT_PATH=/var/jenkins_home/Fortify/reports/<BUILDID>/<ENV>/<yyyyMMdd_HHmmss>
 FPR=$REPORT_PATH/<BUILDID>.fpr
 ```
 
-Shell 內固定加入 Fortify 25.4.0 工具路徑：
+Shell 內固定加入 Fortify 26.2.0 工具路徑：
 
 ```text
-/var/jenkins_home/Fortify/OpenText_SAST_Fortify_25.4.0/bin
-/var/jenkins_home/Fortify/OpenText_Application_Security_Tools_25.4.0/bin
+/var/jenkins_home/Fortify/OpenText_SAST_Fortify_26.2.0/bin
+/var/jenkins_home/Fortify/OpenText_Application_Security_Tools_26.2.0/bin
 ```
 
 掃描完成後，shell 會透過 `BIRTReportGenerator` 在同一個 `REPORT_PATH` 下產出下列報表：
@@ -191,7 +197,7 @@ OWASP Top 10 報表會帶入 `--SecurityIssueDetails`，包含弱點明細。
 | `Fortify-FSAP-GATEWAY.sh` | `FSAP-GATEWAY` | `/var/jenkins_home/workspace/FORTIFY-FSAP-GATEWAY` | `boot:fastgateway:clean boot:fastgateway:build -x check --offline`。 |
 | `Fortify-FSAP-MODEL.sh` | `FSAP-MODEL` | `/var/jenkins_home/workspace/FORTIFY-FSAP-MODEL` | `model-grpc-common:clean model-grpc-common:build -x publishToMavenLocal -x check --offline`。 |
 | `Fortify-FSAP-BPMN-UTILS.sh` | `FSAP-BPMN-UTILS` | `/var/jenkins_home/workspace/BOT-FORTIFY-FSAP-BPMN-UTILS` | `bpmn-utils:clean bpmn-utils:build -x publishToMavenLocal -x check --offline`。 |
-| `Fortify-FSAP-MONTH-REPORT.sh` | `FORTIFY-FSAP-MONTH-REPORT` | `/var/jenkins_home/workspace/FORTIFY-FSAP-MONTH-REPORT` | `clean bootJar --offline`。 |
+| `Fortify-FSAP-MONTH-REPORT.sh` | `FSAP-MONTH-REPORT` | `/var/jenkins_home/workspace/FORTIFY-FSAP-MONTH-REPORT` | `clean bootJar --offline`。 |
 | `Fortify-TXCONTROL.sh` | `TXCONTROL` | `/var/jenkins_home/workspace/FORTIFY-TXCONTROL` | `clean build -x publishToMavenLocal -x check --offline`。 |
 | `Fortify-FAC.sh` | `FAC` | `/var/jenkins_home/workspace/FORTIFY-FAC` | `clean build -x check --offline`。 |
 | `Fortify-NCB.sh` | `NCB` | `/var/jenkins_home/workspace/FORTIFY-NCB` | `clean build -x check --offline`。 |
@@ -203,17 +209,19 @@ OWASP Top 10 報表會帶入 `--SecurityIssueDetails`，包含弱點明細。
 ```mermaid
 flowchart LR
   A([使用者或排程觸發掃描總管 Job]) --> B[Apply Parameters]
-  B --> C[先觸發 FORTIFY-RELEASE-FSAP-FLOW-UTILS]
-  C --> D[依布林參數觸發各 FORTIFY 掃描 Job]
-  D --> E[子 Job 載入 fortifyScan]
-  E --> F[Sparse Checkout 取得 fortify/shells]
-  F --> G[複製 shell 到 Jenkins Agent]
-  G --> H[checkout 目標專案 env branch]
-  H --> I[執行 Fortify shell]
-  I --> J[sourceanalyzer clean/build/translate/scan]
-  J --> K[產出 FPR]
-  K --> L[BIRTReportGenerator 產出 PDF/HTML 報表]
-  D --> M[總管 Job 彙整 saved_artifacts 並 archive]
+  B --> C{is_release_utils?}
+  C -->|是| D[觸發 FORTIFY-RELEASE-FSAP-FLOW-UTILS]
+  C -->|否| E[依布林參數觸發各 FORTIFY 掃描 Job]
+  D --> E
+  E --> F[子 Job 載入 fortifyScan]
+  F --> G[Sparse Checkout 取得 fortify/shells]
+  G --> H[複製 shell 到 Jenkins Agent]
+  H --> I[checkout 目標專案 git_branch_name]
+  I --> J[依 branch 設定 env：sit 或 uat]
+  J --> K[執行 Fortify shell]
+  K --> L[sourceanalyzer clean/build/translate/scan]
+  L --> M[BIRTReportGenerator 產出 PDF/HTML 報表]
+  M --> N[總管 Job 打包 artifacts/reports 並 archive]
 ```
 
 ## Jenkins 環境需求
@@ -221,11 +229,11 @@ flowchart LR
 - Jenkins Global Pipeline Libraries 需註冊 shared library 名稱 `fortifyScan`，並指向此 repository。
 - Jenkins credential `gitea` 需可讀取此 repository 與所有目標專案 repository。
 - Jenkins Global Tool Configuration 需至少註冊一組 JDK，供 `JENKINS_JDK_TOOL` 使用。
-- Jenkins Agent 需安裝 Fortify SCA 與 Application Security Tools 25.4.0，且路徑需符合 shell 內設定。
+- Jenkins Agent 需安裝 Fortify SCA 與 Application Security Tools 26.2.0，且路徑需符合 shell 內設定。
 - Jenkins Agent 需可執行 `BIRTReportGenerator`，用於產出 OWASP Top 10 與 Developer Workbook 報表。
 - Jenkins Agent 需可執行 `sudo chown`、`sudo chmod`，以調整 `/var/jenkins_home/Fortify/shells/*.sh` 與 `gradlew` 權限。
 - Jenkins Agent 需具備 Pipeline 中使用的 step/plugin，例如 `cleanWs`、`timestamps`、`ansiColor`、`archiveArtifacts`。
-- 各目標專案需存在與 `env` 參數同名的 branch，例如 `sit` 或 `uat`。
+- 各目標專案需存在 `sit` 與 `master` branch；總管流程會將 `sit` 對應到 `sit` 環境、`master` 對應到 `uat` 環境。
 - Shell 內的 `PROJECTROOT0` 是固定 workspace 路徑，Jenkins Job 名稱或 workspace 設定需與該路徑一致。
 - Shell 使用 Gradle `--offline`，因此 Jenkins Maven/Gradle cache 需事先備妥依賴。
 
@@ -236,8 +244,8 @@ flowchart LR
 3. 建立 release 總管 Job，Jenkinsfile 指向 `fortify/Jenkinsfile-release`。
 4. 建立掃描總管 Job，Jenkinsfile 指向 `fortify/Jenkinsfile`。
 5. 第一次執行總管或子專案 Job 時，Pipeline 會建立參數；重新進入 `Build with Parameters` 後才會執行實際流程。
-6. 從掃描總管 Job 選擇 `env` 與要掃描的產品，Pipeline 會先跑 release utils，再依序觸發掃描 Job。
-7. 若需單獨掃描某一產品，可直接觸發對應子 Job，並確認 `env`、`GIT_URL`、`SHELL_NAME`、`JENKINS_JDK_TOOL` 參數正確。
+6. 從掃描總管 Job 選擇 `git_branch_name` 與要掃描的產品；`master` 會使用 `uat` 環境，`sit` 會使用 `sit` 環境。
+7. 若需單獨掃描某一產品，可直接觸發對應子 Job，並確認 `git_branch_name`、`env`、`GIT_URL`、`SHELL_NAME`、`JENKINS_JDK_TOOL` 參數正確。
 
 ## 新增或調整掃描專案
 
@@ -245,7 +253,7 @@ flowchart LR
 
 1. 新增 `fortify/<project>/Jenkinsfile`，透過 `fortifyScan(gitUrl: ..., shellName: ...)` 指定目標 repo 與 shell。
 2. 將對應 Fortify shell 放到 `fortify/shells/`，檔名需與 `shellName` 完全一致。
-3. 確認 shell 內的 `BUILDID`、`REPORT_PATH`、`FPR`、`PROJECTROOT0`、Gradle build 指令與 BIRT 報表產出符合 Jenkins Job 與目標專案。
-4. 若需由掃描總管觸發，在 `fortify/Jenkinsfile` 加入 boolean 參數與 stage。
-5. 若掃描前需 publish 共用模組，在 `fortify/Jenkinsfile-release` 加入對應 release stage。
-6. 若產物需由總管歸檔，在 `filesToCopy` 清單加入檔名。
+3. `fortifyScan` 會建立 `git_branch_name`、`env`、`GIT_URL`、`SHELL_NAME` 與 `JENKINS_JDK_TOOL` 參數；`git_branch_name` 控制 checkout 分支，`env` 控制掃描環境，兩者可不同，例如 `master` 搭配 `uat`。
+4. 確認 shell 內的 `BUILDID`、`REPORT_PATH`、`FPR`、`PROJECTROOT0`、Gradle build 指令與 BIRT 報表產出符合 Jenkins Job 與目標專案。
+5. 若需由掃描總管觸發，在 `fortify/Jenkinsfile` 加入 boolean 參數與 stage，並在需要時將產物檔名加入 `filesToCopy`。
+6. 若掃描前需 publish 共用模組，在 `fortify/Jenkinsfile-release` 加入對應 release stage。
