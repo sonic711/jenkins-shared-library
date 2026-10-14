@@ -41,8 +41,7 @@ OLDFILENUMBER="Fortify-NCL.sh.fileno"
 FILENOMAXDIFF=10
 ENABLE_BYTECODE=false
 
-REPORT_OUTPUT="${FORTIFY_REPORT_DIR:-.}"
-mkdir -p "$REPORT_PATH" "$REPORT_OUTPUT" || exit 1
+mkdir -p "/var/jenkins_home/Fortify/reports/$BUILDID/$ENV/$(date +%Y%m%d_%H%M%S)"
 
 export PATH="/var/jenkins_home/Fortify/OpenText_SAST_Fortify_26.2.0/bin:$PATH"
 export PATH="/var/jenkins_home/Fortify/OpenText_Application_Security_Tools_26.2.0/bin:$PATH"
@@ -138,31 +137,29 @@ echo Starting generate reports
 # OWASP Top 10
 BIRTReportGenerator \
     -source "$FPR" \
-    -output "$REPORT_OUTPUT/${BUILDID}_OWASPTop10.pdf" \
+    -output "${BUILDID}_OWASPTop10.pdf" \
     -format "PDF" \
     -template "OWASP Top 10" \
-    --SecurityIssueDetails || exit 1
+    --SecurityIssueDetails
 BIRTReportGenerator \
     -source "$FPR" \
-    -output "$REPORT_OUTPUT/${BUILDID}_OWASPTop10.html" \
+    -output "${BUILDID}_OWASPTop10.html" \
     -format "HTML" \
     -template "OWASP Top 10" \
-    --SecurityIssueDetails || exit 1
+    --SecurityIssueDetails
 # DeveloperWorkbook
 BIRTReportGenerator \
         -source "$FPR" \
-        -output "$REPORT_OUTPUT/${BUILDID}_DeveloperWorkbook.pdf" \
+        -output "${BUILDID}_DeveloperWorkbook.pdf" \
         -format "PDF" \
-        -template "Developer Workbook" || exit 1
+        -template "Developer Workbook"
 BIRTReportGenerator \
         -source "$FPR" \
-        -output "$REPORT_OUTPUT/${BUILDID}_DeveloperWorkbook.html" \
+        -output "${BUILDID}_DeveloperWorkbook.html" \
         -format "HTML" \
-        -template "Developer Workbook" || exit 1
+        -template "Developer Workbook"
 
-for suffix in OWASPTop10.pdf OWASPTop10.html DeveloperWorkbook.pdf DeveloperWorkbook.html; do
-    cp "$REPORT_OUTPUT/${BUILDID}_$suffix" "$REPORT_PATH/" || exit 1
-done
+find . -type f \( -name "*DeveloperWorkbook*" -o -name "*OWASPTop10*" \) -exec cp -v {} "$REPORT_PATH" \;
 # ###########################################################################
 echo Finished
 # ARGS "-cp"
